@@ -1,0 +1,24 @@
+<!-- Create this file, open it in a browser, then open your console.  Go to http://pullup.io, and watch your console -->
+<html>
+<head>
+    <title>Test</title>
+    <script src="http://localhost:5000/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+      var socket = io.connect("http://localhost:5000");
+      socket.emit('subscribe', 'test');
+      socket.on('log', function(data) {
+        console.log('log', data);
+      });
+      socket.on('catchup', function(messages) {
+        for(var i=0,max=messages.length; i<max; i++) {
+          console.log(messages[i]);
+        }
+      });
+
+      socket.emit('catchup', 'test');
+    </script>
+</head>
+<body>
+  test..
+</body>
+</html>
