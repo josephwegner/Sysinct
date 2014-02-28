@@ -1,25 +1,43 @@
 var http = require('http');
 var io = require('socket.io');
+var url = require('url');
 
 var app = http.createServer(function(req, res) {
-    var data = "";
+    var urlParts = url.parse(req.url);
 
-    req.on('data', function(chunk) {
-      data += chunk;
-    });
+    if(urlParts.path.indexOf("/drain") === 0) {
+      var data = "";
 
-    req.on('end', function() {
-      res.end();
+      req.on('data', function(chunk) {
+        data += chunk;
+      });
 
-      var messages = data.split("\n");
-      messages.pop();
+      req.on('end', function() {
+        res.end();
 
-      for(var i=0,max=messages.length; i<max; i++) {
-        socketApp.sockets.emit('log', messages[i]);
-      }
-    });
+        var messages = data.split("\n");
+        messages.pop();
+
+        var room = urlParts.path.replace("/drains/", "");
+
+        console.log("got "+messages.length+" messages.  Sending to "+socketApp.sockets.in(room).length+" listeners in "+room);
+
+        for(var i=0,max=messages.length; i<max; i++) {
+          socketApp.sockets.in(room).emit('log', messages[i]);
+        }
+      });
+    } else {
+      res.end("git out");
+    }
 });
 
 app.listen(3333);
 
 socketApp = io.listen(app);
+
+socketApp.on('connection', function(socket) {
+  socket.on('subscribe', function(room) {
+    console.log("subscribe to "+room);
+    socket.join(room);
+  });
+});
